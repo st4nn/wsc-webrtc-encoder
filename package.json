@@ -1,0 +1,26 @@
+{
+  "name": "wsc-webrtc-encoder",
+  "version": "0.0.5",
+  "description": "Front-end component for broadcasting to Wowza Cloud Streaming Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/st4nn/wsc-webrtc-encoder.git"
+  },
+  "keywords": [
+    "broadcasting",
+    "streaming",
+    "wowza",
+    "cloud",
+    "webrtc"
+  ],
+  "author": "Jhonathan Espinosa",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/st4nn/wsc-webrtc-encoder/issues"
+  },
+  "homepage": "https://github.com/st4nn/wsc-webrtc-encoder#readme"
+}
