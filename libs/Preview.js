@@ -128,6 +128,13 @@ class PreviewOnCanvas{
     removeAllResources(){
         this.resources = [];
     }
+    getAllResources(){
+        return {
+            resources: this.resources,
+            text: this.text,
+            background: this.background
+        }
+    }
     addText({ background, size, color, value }){
         this.text = {
             background,
