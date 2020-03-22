@@ -1,0 +1,226 @@
+<html>
+    <meta charset="UTF-8">
+    <head>
+        <link href="https://fonts.googleapis.com/css?family=Nunito&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+            integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous"/>
+        <link href="css/main.css" rel="stylesheet" />
+
+    </head>
+    <body>
+        <input type="hidden" id="userAgent" name="userAgent" value="" />
+        
+        <div class="main-header">
+            <i></i>
+            <h4>WebRTC Encoder</h4>
+            <button id="btnSettings" class="btn btn-primary"><i class="fas fa-cogs"></i>Settings</button>
+        </div>
+        <div class="settings-section" id="settings-section">
+            <div class="overlay" id="settings-section-overlay"></div>
+            <form id="frmSettings">
+                <div class="header">
+                    <i class="fas fa-cogs"></i>
+                    <h5>Settings</h5>
+                    <i id="settings-section-close" class="fas fa-times"></i>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Host Server</label>
+                    <input id="sdpURL" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Application Name</label>
+                    <input id="applicationName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Stream Name</label>
+                    <input id="streamName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">User</label>
+                    <input id="streamUser" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input id="streamPassword" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Video Bitrate</label>
+                    <input id="videoBitrate" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Audio Bitrate</label>
+                    <input id="audioBitrate" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">FrameRate</label>
+                    <input id="videoFrameRate" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Video Codec</label>
+                    <select name="videoChoice" id="videoChoice" class="form-control">
+                        <option value="42e01f" selected="selected">H264</option>
+                        <option value="VP9">VP9</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Audio Codec</label>
+                    <select name="audioChoice" id="audioChoice" class="form-control">
+                        <option value="opus" selected="selected">Opus</option>
+                    </select>
+                </div>
+                <div class="text-right">
+                    <button id="btnSettings" class="btn btn-success"><i class="fas fa-save"></i> Save</button>
+                </div>
+
+            </form>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="preview-canvas"></canvas>
+            <button id="btnPublishPreview" class="btn btn-dark"><i class="fas fa-arrow-right"></i></button>
+            <canvas id="publish-canvas"></canvas>
+        </div>
+
+        <div class="sources-container">
+            <div>
+                <i class="fas fa-camera"></i>
+                <button id="btnShare-Camera">Share camera</button>
+                <video id="localVideo" class="stream-object" autoplay playsinline muted></video>
+            </div>
+            <div>
+                <i class="fas fa-desktop"></i>
+                <button id="btnShare-Screen">Share screen</button>
+                <video id="localScreen" class="stream-object" autoplay playsinline muted></video>
+            </div>
+            <div>
+                <i class="fas fa-microphone"></i>
+                <button id="btnShare-Microphone">Share microphone</button>
+                <audio id="localAudio" class="stream-object" autoplay playsinline muted controls></audio>
+            </div>
+        </div>
+
+        <div class="layouts">
+            <h5>Publishing layouts</h5>
+            <div class="layout-item" id="btn-layout_0">
+                <img src="assets/layouts/layout_1.png" alt="layout 1"/>
+            </div>
+            <div  class="layout-item" id="btn-layout_1">
+                <img src="assets/layouts/layout_2.png" alt="layout 2"/>
+            </div>
+            <div  class="layout-item" id="btn-layout_2">
+                <img src="assets/layouts/layout_3.png" alt="layout 3"/>
+            </div>
+            <div  class="layout-item" id="btn-layout_3">
+                <img src="assets/layouts/layout_4.png" alt="layout 4"/>
+            </div>
+            <div  class="layout-item" id="btn-layout_4">
+                <img src="assets/layouts/layout_5.png" alt="layout 5"/>
+            </div>
+            <div  class="layout-item" id="btn-layout_5">
+                <img src="assets/layouts/layout_6.png" alt="layout 6"/>
+            </div>
+            </div>
+        </div>
+
+        <div class="letterheads">
+            <div class="header">
+                <h5>Letterheads</h5>
+                <div>
+                    <button id="btnLetterhead_Save" class="btn btn-dark"><i class="fas fa-share-square"></i> Save</button>
+                    <button id="btnLetterhead_Hide" class="btn btn-dark"><i class="fas fa-eye-slash"></i> Hide Letterhead</button>
+                </div>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label class="form-label">Text:</label>
+                    <input id="txtLetterhead_Value" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Text size:</label>
+                    <input id="txtLetterhead_Size" type="number" class="form-control" value="50"/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Text color (HEX):</label>
+                    <input id="txtLetterhead_Color" type="text" class="form-control" value="#FFFFFF" />
+                </div>
+            </div>
+            <div>
+                <h5>Design</h5>
+                <div>
+                    <div class="letterheads-design-list">
+                        <div class="letterhead-item">
+                            <img src="assets/letterheads/letterhead_3_256x.png" alt="letterhead 3">
+                        </div>
+                        <div class="letterhead-item">
+                            <img src="assets/letterheads/letterhead_4_256x.png" alt="letterhead 4">
+                        </div>
+                        <div class="letterhead-item">
+                            <img src="assets/letterheads/letterhead_1_256x.png" alt="letterhead 1">
+                        </div>
+                        <div class="letterhead-item">
+                            <img src="assets/letterheads/letterhead_2_256x.png" alt="letterhead 2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="backgrounds">
+            <h5>Background</h5>
+            <div class="background-list">
+                <div class="background-item selected">
+                    <img src="assets/backgrounds/background_0_256x.jpg" alt="background 0">
+                </div>
+
+                <div class="background-item">
+                    <img src="assets/backgrounds/background_1_256x.jpg" alt="background 1">
+                </div>
+
+                <div class="background-item">
+                    <img src="assets/backgrounds/background_2_256x.jpg" alt="background 2">
+                </div>
+            </div>
+        </div>
+    
+        
+
+        <script type="text/javascript">
+            document.getElementById("userAgent").value = navigator.userAgent;
+        </script>
+
+        <script src="js/backgroundFunctions.js"></script>
+        <script src="js/layoutFunctions.js"></script>
+        <script src="js/letterheadFunctions.js"></script>
+        <script src="js/controllers.js"></script>
+        <script src="js/index.js"></script>
+
+        <script>
+            const defaultSettings = {
+                sdpURL: "wss://408d97.entrypoint.cloud.wowza.com/webrtc-session.json",
+                applicationName: "app-e01c",
+                streamName: "SUFwSEN1",
+                streamUser: "",
+                streamPassword: "",
+                videoBitrate: "120",
+                audioBitrate: "32",
+                videoFrameRate: "29.97"
+            };
+
+            for (let index in defaultSettings) {
+                document.getElementById(index).value = defaultSettings[index];
+            }
+        </script>
+
+        <script type="module">
+            import { WebRTCEncoder } from '../index.js';
+
+            loadControllers();
+            pageReady(WebRTCEncoder);
+        </script>
+
+        <div>
+            <span id="sdpDataTag"></span>
+        </div>
+    </body>
+</html>

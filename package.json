@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/st4nn/wsc-webrtc-encoder/issues"
   },
-  "homepage": "https://github.com/st4nn/wsc-webrtc-encoder#readme"
+  "homepage": "https://github.com/st4nn/wsc-webrtc-encoder#readme",
+  "dependencies": {
+    "media-stream-merger": "^1.0.0"
+  }
 }
