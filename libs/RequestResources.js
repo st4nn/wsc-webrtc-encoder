@@ -5,10 +5,12 @@ class requester{
             audio: false,
         };
 
-        if(navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-                getUserMediaSuccess(stream, localVideo);
-            }).catch(errorHandler);
+        if (navigator.mediaDevices){
+            if(navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+                    getUserMediaSuccess(stream, localVideo);
+                }).catch(errorHandler);
+            }
         }
         else if(navigator.getUserMedia) {
             navigator.getUserMedia(constraints, (stream) => {
