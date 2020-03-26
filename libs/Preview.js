@@ -51,7 +51,7 @@ class PreviewOnCanvas{
                     }
 
                     if (typeof sHeight === "function") {
-                        sHeight = sx(this.settings.height);
+                        sHeight = sHeight(this.settings.height);
                     }
 
                     if (typeof dx === "function") {

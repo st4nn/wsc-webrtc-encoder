@@ -1,8 +1,13 @@
+navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
+window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+window.RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate || window.webkitRTCIceCandidate;
+window.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
+
 class requester{
-    camera(localVideo){
+    camera(localVideo, ratio = 16/9){
         const constraints = {
-            video: true,
-            audio: false,
+            video: { aspectRatio: ratio },
+            audio: false
         };
 
         if (navigator.mediaDevices){

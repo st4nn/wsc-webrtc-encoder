@@ -4,6 +4,7 @@
         <link href="https://fonts.googleapis.com/css?family=Nunito&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
             integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous"/>
+        <link href="css/animations.css" rel="stylesheet" />
         <link href="css/main.css" rel="stylesheet" />
 
     </head>
@@ -13,7 +14,10 @@
         <div class="main-header">
             <i></i>
             <h4>WebRTC Encoder</h4>
-            <button id="btnSettings" class="btn btn-primary"><i class="fas fa-cogs"></i>Settings</button>
+            <div>
+                <button id="btnCast" class="btn btn-success"><i class="fas fa-broadcast-tower"></i> Connect</button>
+                <button id="btnSettings" class="btn btn-primary"><i class="fas fa-cogs"></i>Settings</button>
+            </div>
         </div>
         <div class="settings-section" id="settings-section">
             <div class="overlay" id="settings-section-overlay"></div>
@@ -25,35 +29,35 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Host Server</label>
-                    <input id="sdpURL" class="form-control" />
+                    <input id="sdpURL" name="sdpURL" class="form-control" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">Application Name</label>
-                    <input id="applicationName" class="form-control" />
+                    <input id="applicationName" name="applicationName" class="form-control" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">Stream Name</label>
-                    <input id="streamName" class="form-control" />
+                    <input id="streamName" name="streamName" class="form-control" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">User</label>
-                    <input id="streamUser" class="form-control" />
+                    <input id="streamUser" name="streamUser" class="form-control" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input id="streamPassword" class="form-control" />
+                    <input id="streamPassword" name="streamPassword" class="form-control" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">Video Bitrate</label>
-                    <input id="videoBitrate" class="form-control" />
+                    <input id="videoBitrate" name="videoBitrate" class="form-control" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">Audio Bitrate</label>
-                    <input id="audioBitrate" class="form-control" />
+                    <input id="audioBitrate" name="audioBitrate" class="form-control" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">FrameRate</label>
-                    <input id="videoFrameRate" class="form-control" />
+                    <input id="videoFrameRate" name="videoFrameRate" class="form-control" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">Video Codec</label>
@@ -182,6 +186,9 @@
                 </div>
             </div>
         </div>
+
+        <div id="error-container" class="error-container">
+        </div>
     
         
 
@@ -190,6 +197,7 @@
         </script>
 
         <script src="js/backgroundFunctions.js"></script>
+        <script src="js/connectionFunctions.js"></script>
         <script src="js/layoutFunctions.js"></script>
         <script src="js/letterheadFunctions.js"></script>
         <script src="js/controllers.js"></script>
@@ -200,8 +208,6 @@
                 sdpURL: "wss://408d97.entrypoint.cloud.wowza.com/webrtc-session.json",
                 applicationName: "app-e01c",
                 streamName: "SUFwSEN1",
-                streamUser: "",
-                streamPassword: "",
                 videoBitrate: "120",
                 audioBitrate: "32",
                 videoFrameRate: "29.97"

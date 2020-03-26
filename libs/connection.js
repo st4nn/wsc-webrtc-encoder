@@ -1,169 +1,138 @@
-const GO_BUTTON_START = "Publish";
-const GO_BUTTON_STOP = "Stop";
+let peerConnection = null;
+let peerConnectionConfig = { 'iceServers': [] };
 
+let wsURL = "";
+let wsConnection = null;
+let streamInfo = { applicationName: "", streamName: "", sessionId: "[empty]" };
+let userData = { param1: "value1" };
+let vBitrate = 0;
+let aBitrate = 0;
+let vFrameRate = "";
+let vChoice = "";
+let aChoice = "";
+let videoIndex = -1;
+let audioIndex = -1;
+let localStream = null;
 
+let status = "stopped";
 
-var peerConnection = null;
-var peerConnectionConfig = { 'iceServers': [] };
-var localStream = null;
-var audioStream = null;
-var wsURL = "wss://408d97.entrypoint.cloud.wowza.com/webrtc-session.json";
-var wsConnection = null;
-var streamInfo = { applicationName: "app-e01c", streamName: "SUFwSEN1", sessionId: "[empty]" };
-var userData = { param1: "value1" };
-var videoBitrate = 120;
-var audioBitrate = 32;
-var videoFrameRate = "29.97";
-var videoChoice = "42e01f";
-var audioChoice = "opus";
-var videoIndex = -1;
-var audioIndex = -1;
-var userAgent = null;
-var newAPI = false;
-var SDPOutput = new Object();
+const SDPOutput = new Object();
+const callbacks = new Object();
 
-navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
-window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-window.RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate || window.webkitRTCIceCandidate;
-window.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
+class WSConnection{
+    constructor({ url, applicationName, streamName, videoBitrate = 120, audioBitrate = 32, videoFrameRate = "29.97", videoChoice = "42e01f", audioChoice = "opus", onOpen, onClose, onMessage, onError}){
+        wsURL = url;
 
-function pageReady() {
-    loadCookies();
-    $("#buttonGo").attr('value', GO_BUTTON_START);
+        streamInfo.applicationName = applicationName;
+        streamInfo.streamName = streamName;
+        streamInfo.sessionId = "[empty]";
 
-    const localVideo = document.getElementById('localVideo');
-    const localScreen = document.getElementById('localScreen');
-    const localAudio = document.getElementById('localAudio');
+        vBitrate = videoBitrate;
+        aBitrate = audioBitrate;
 
-    const CameraButton = document.getElementById("buttonCamera");
-    CameraButton.addEventListener("click", () => {
-        const constraints = {
-            video: true,
-            audio: false,
-        };
+        vFrameRate = videoFrameRate;
+        vChoice = videoChoice;
+        aChoice = audioChoice;
+        
+        callbacks.onOpen = onOpen;
+        callbacks.onClose = onClose;
+        callbacks.onMessage = onMessage;
+        callbacks.onError = onError;
 
-        if (navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-                getUserMediaSuccess(stream, localVideo);
-            }).catch(errorHandler);
-            newAPI = false;
+        for (let callbackIndex in callbacks){
+            if (typeof callbacks[callbackIndex] !== "function"){
+                callbacks[callbackIndex] = ()=>{};
+            }
         }
-        else if (navigator.getUserMedia) {
-            navigator.getUserMedia(constraints, (stream) => {
-                getUserMediaSuccess(stream, localVideo);
-            }, errorHandler);
+    }
+    setStream(stream){
+        localStream = stream;
+    }
+
+    start(){
+        if (localStream !== null){
+            if (peerConnection === null) {
+                startPublisher();
+            }
+        } else{
+            callbacks.onError({ code: 204, data: "You must set one stream"});
         }
-        else {
-            alert('Your browser does not support getUserMedia API');
+    }
+
+    stop(){
+        stopPublisher();
+    }
+
+    updateSettings({
+        url = wsURL,
+        applicationName = streamInfo.applicationName,
+        streamName = streamInfo.streamName,
+        videoBitrate = vBitrate,
+        audioBitrate = aBitrate,
+        videoFrameRate = vFrameRate,
+        videoChoice = vChoice,
+        audioChoice = aChoice
+    }) {
+        wsURL = url;
+
+        streamInfo.applicationName = applicationName;
+        streamInfo.streamName = streamName;
+        streamInfo.sessionId = "[empty]";
+
+        vBitrate = videoBitrate;
+        aBitrate = audioBitrate;
+
+        vFrameRate = videoFrameRate;
+        vChoice = videoChoice;
+        aChoice = audioChoice;
+    }
+
+    setCallback(type, listener){
+        if (typeof type === "string"){
+            if (callbacks[type] == undefined){
+                console.error("This callback is not defined");
+            } else{
+                if (typeof listener !== "function"){
+                    console.error("Listener must be a function");
+                } else{
+                    callbacks[type] = listener;
+                }
+            }
         }
-    });
-
-    const AudioButton = document.getElementById("buttonAudio");
-    AudioButton.addEventListener("click", () => {
-        const constraints = {
-            video: false,
-            audio: true
-        };
-
-        if (navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-                localAudio.srcObject = stream;
-            }).catch(errorHandler);
-            newAPI = false;
-        }
-        else if (navigator.getUserMedia) {
-            navigator.getUserMedia(constraints, (stream) => {
-                localAudio.srcObject = stream;
-            }, errorHandler);
-        }
-        else {
-            alert('Your browser does not support getUserMedia API');
-        }
-    });
-
-    const ScreenButton = document.getElementById("buttonScreen");
-    ScreenButton.addEventListener("click", () => {
-        const constraints = {
-            video: true
-        };
-
-        if (navigator.mediaDevices.getDisplayMedia) {
-            navigator.mediaDevices.getDisplayMedia(constraints).then((stream) => {
-                getUserMediaSuccess(stream, localScreen);
-            }).catch(errorHandler);
-            newAPI = false;
-        } else if (navigator.getDisplayMedia) {
-            navigator.getDisplayMedia(constraints, (stream) => {
-                getUserMediaSuccess(stream, localScreen);
-            }, errorHandler);
-        } else {
-            navigator.mediaDevices.getUserMedia({ video: { mediaSource: 'screen' } }).then((stream) => {
-                getUserMediaSuccess(stream, localScreen);
-            }).catch(errorHandler);
-        }
-
-        console.log("newAPI: " + newAPI);
-    });
-
-    let isDrawingOnCanvas = false;
-
-    document.getElementById("startCanvas").addEventListener("click", function () {
-        this.innerText = (isDrawingOnCanvas ? "Start Canvas" : "Stop Canvas");
-        if (isDrawingOnCanvas) {
-            clearInterval(drawingOnCanvas);
-            isDrawingOnCanvas = false;
-        } else {
-            isDrawingOnCanvas = true;
-            const canvas = window.canvas = document.getElementById('myCanvas');
-            localStream = canvas.captureStream(parseFloat(videoFrameRate));
-            localStream.addTrack(localAudio.captureStream());
-            //localStream.addTrack(localVideo);
-            console.log(localStream);
-            drawingOnCanvas = setInterval(() => {
-                const canvas = window.canvas = document.getElementById('myCanvas');
-                canvas.width = 480;
-                canvas.height = 360;
-                canvas.getContext('2d').drawImage(localScreen, 0, 0, canvas.width, canvas.height);
-
-                const
-                    camaraHeight = localVideo.videoHeight,
-                    camaraWidth = localVideo.videoWidth,
-                    ratio = camaraHeight / camaraWidth,
-                    videoHeight = (120 * ratio),
-                    videoWidth = 120,
-                    posY = canvas.height - 10 - (videoHeight),
-                    posX = canvas.width - 10 - videoWidth;
-
-                canvas.getContext('2d').drawImage(localVideo, 0, 0, camaraWidth, camaraHeight, posX, posY, videoWidth, videoHeight);
-            }, parseFloat(videoFrameRate));
-        }
-    });
+    }
+    getStatus(){
+        return (peerConnection === null ? "stopped" : "broadcasting");
+    }
 }
 
+export default WSConnection;
 
-function wsConnect(url) {
+function wsConnect(url){
     wsConnection = new WebSocket(url);
     wsConnection.binaryType = 'arraybuffer';
 
     wsConnection.onopen = function () {
-        console.log("wsConnection.onopen");
-
+        callbacks.onOpen();
         peerConnection = new RTCPeerConnection(peerConnectionConfig);
-        peerConnection.onicecandidate = gotIceCandidate;
+        
+        peerConnection.onconnectionstatechange = (evt)=>{
+            const 
+                { target = {}} = evt,
+                { connectionState = false} = target;
 
-        if (newAPI) {
-            var localTracks = localStream.getTracks();
-            for (var localTrack of localTracks) {
-                peerConnection.addTrack(localTrack, localStream);
+            if (connectionState){
+                if (connectionState !== "connected" && connectionState !== "connecting"){
+                    callbacks.onError({code: 503, data: "Your connection is lost"});
+                    stopPublisher();
+                }
             }
         }
-        else {
-            peerConnection.addStream(localStream);
-        }
+
+        peerConnection.onicecandidate = gotIceCandidate;
+
+        peerConnection.addStream(localStream);
 
         peerConnection.createOffer().then(gotDescription).catch(errorHandler);
-
-
     }
 
     //var offerOptions = {
@@ -176,32 +145,26 @@ function wsConnect(url) {
     // };
 
     wsConnection.onmessage = function (evt) {
-        console.log("wsConnection.onmessage: " + evt.data);
+        callbacks.onMessage(evt);
 
-        var msgJSON = JSON.parse(evt.data);
+        const msgJSON = JSON.parse(evt.data);
+        const msgStatus = Number(msgJSON['status']);
 
-        var msgStatus = Number(msgJSON['status']);
-        var msgCommand = msgJSON['command'];
+        //const msgCommand = msgJSON['command'];
 
         if (msgStatus != 200) {
-            $("#sdpDataTag").html(msgJSON['statusDescription']);
             stopPublisher();
+            callbacks.onError(evt);
         }
         else {
-            $("#sdpDataTag").html("");
-
-            var sdpData = msgJSON['sdp'];
+            const sdpData = msgJSON['sdp'];
             if (sdpData !== undefined) {
-                console.log('sdp: ' + msgJSON['sdp']);
-
                 peerConnection.setRemoteDescription(new RTCSessionDescription(sdpData)).catch(errorHandler);
             }
 
-            var iceCandidates = msgJSON['iceCandidates'];
+            const iceCandidates = msgJSON['iceCandidates'];
             if (iceCandidates !== undefined) {
                 for (var iceCandidate of iceCandidates) {
-                    console.log('iceCandidates: ' + iceCandidate);
-
                     peerConnection.addIceCandidate(new RTCIceCandidate(iceCandidate));
                 }
             }
@@ -213,51 +176,17 @@ function wsConnect(url) {
     }
 
     wsConnection.onclose = function () {
-        console.log("wsConnection.onclose");
+        
     }
 
     wsConnection.onerror = function (evt) {
-        console.log("wsConnection.onerror: " + JSON.stringify(evt));
-
-        $("#sdpDataTag").html('WebSocket connection failed: ' + wsURL);
+        callbacks.onError({code: 404, data: `Connection to ${wsURL} failed`});
         stopPublisher();
     }
 }
 
-function getUserMediaSuccess(stream, videoObject) {
-    console.log("getUserMediaSuccess: " + stream);
-    try {
-        videoObject.srcObject = stream;
-    } catch (error) {
-        videoObject.src = window.URL.createObjectURL(stream);
-    }
-}
-
 function startPublisher() {
-    wsURL = $('#sdpURL').val();
-    streamInfo.applicationName = $('#applicationName').val();
-    streamInfo.streamName = $('#streamName').val();
-    videoBitrate = $('#videoBitrate').val();
-    audioBitrate = $('#audioBitrate').val();
-    videoFrameRate = $('#videoFrameRate').val();
-    userAgent = $('#userAgent').val().toLowerCase();
-    videoChoice = $('#videoChoice').val();
-    audioChoice = $('#audioChoice').val();
-
-    $.cookie("webrtcPublishWSURL", wsURL, { expires: 365 });
-    $.cookie("webrtcPublishApplicationName", streamInfo.applicationName, { expires: 365 });
-    $.cookie("webrtcPublishStreamName", streamInfo.streamName, { expires: 365 });
-    $.cookie("webrtcPublishVideoBitrate", videoBitrate, { expires: 365 });
-    $.cookie("webrtcPublishAudioBitrate", audioBitrate, { expires: 365 });
-    $.cookie("webrtcPublishVideoFrameRate", videoFrameRate, { expires: 365 });
-    $.cookie("webrtcPublishAudioCodec", audioChoice, { expires: 365 });
-    $.cookie("webrtcPublishVideoCodec", videoChoice, { expires: 365 });
-
-    console.log("startPublisher: wsURL:" + wsURL + " streamInfo:" + JSON.stringify(streamInfo));
-
     wsConnect(wsURL);
-
-    $("#buttonGo").attr('value', GO_BUTTON_STOP);
 }
 
 function stopPublisher() {
@@ -269,59 +198,41 @@ function stopPublisher() {
         wsConnection.close();
     wsConnection = null;
 
-    $("#buttonGo").attr('value', GO_BUTTON_START);
-
-    console.log("stopPublisher");
-}
-
-function start() {
-    if (peerConnection == null)
-        startPublisher();
-    else
-        stopPublisher();
+    callbacks.onClose();
 }
 
 function gotIceCandidate(event) {
     if (event.candidate != null) {
-        console.log('gotIceCandidate: ' + JSON.stringify({ 'ice': event.candidate }));
+        //console.log('gotIceCandidate: ' + JSON.stringify({ 'ice': event.candidate }));
     }
 }
 
 function gotDescription(description) {
-    var enhanceData = new Object();
+    const enhanceData = new Object();
 
-    console.log(description);
-
-    if (audioBitrate !== undefined)
-        enhanceData.audioBitrate = Number(audioBitrate);
-    if (videoBitrate !== undefined)
-        enhanceData.videoBitrate = Number(videoBitrate);
-    if (videoFrameRate !== undefined)
-        enhanceData.videoFrameRate = Number(videoFrameRate);
+    if (aBitrate !== undefined)
+        enhanceData.audioBitrate = Number(aBitrate);
+    if (vBitrate !== undefined)
+        enhanceData.videoBitrate = Number(vBitrate);
+    if (vFrameRate !== undefined)
+        enhanceData.videoFrameRate = Number(vFrameRate);
 
 
     description.sdp = enhanceSDP(description.sdp, enhanceData);
-
-    console.log(description);
-
-    console.log('gotDescription: ' + JSON.stringify({ 'sdp': description }));
 
     return peerConnection.setLocalDescription(description)
         .then(() => {
             wsConnection.send('{"direction":"publish", "command":"sendOffer", "streamInfo":' + JSON.stringify(streamInfo) + ', "sdp":' + JSON.stringify(description) + ', "userData":' + JSON.stringify(userData) + '}');
         })
         .catch(err => {
-            console.log('set local description error:');
-            console.log(err);
+            console.error(err);
         });
 }
 
 function addAudio(sdpStr, audioLine) {
-    var sdpLines = sdpStr.split(/\r\n/);
-    var sdpSection = 'header';
-    var hitMID = false;
-    var sdpStrRet = '';
-    var done = false;
+    const sdpLines = sdpStr.split(/\r\n/);
+    let sdpStrRet = '';
+    let done = false;
 
     for (var sdpLine of sdpLines) {
         if (sdpLine.length <= 0)
@@ -388,16 +299,14 @@ function addVideo(sdpStr, videoLine) {
 }
 
 function enhanceSDP(sdpStr, enhanceData) {
-    var sdpLines = sdpStr.split(/\r\n/);
-    var sdpSection = 'header';
-    var hitMID = false;
-    var sdpStrRet = '';
-
-    //console.log("Original SDP: "+sdpStr);
+    let sdpLines = sdpStr.split(/\r\n/);
+    let sdpSection = 'header';
+    let hitMID = false;
+    let sdpStrRet = '';
 
     // Firefox provides a reasonable SDP, Chrome is just odd
     // so we have to doing a little mundging to make it all work
-    if (!sdpStr.includes("THIS_IS_SDPARTA") || videoChoice.includes("VP9")) {
+    if (!sdpStr.includes("THIS_IS_SDPARTA") || vChoice.includes("VP9")) {
         for (var sdpLine of sdpLines) {
             if (sdpLine.length <= 0)
                 continue;
@@ -410,8 +319,8 @@ function enhanceSDP(sdpStr, enhanceData) {
             sdpStrRet += '\r\n';
 
         }
-        sdpStrRet = addAudio(sdpStrRet, deliverCheckLine(audioChoice, "audio"));
-        sdpStrRet = addVideo(sdpStrRet, deliverCheckLine(videoChoice, "video"));
+        sdpStrRet = addAudio(sdpStrRet, deliverCheckLine(aChoice, "audio"));
+        sdpStrRet = addVideo(sdpStrRet, deliverCheckLine(vChoice, "video"));
         sdpStr = sdpStrRet;
         sdpLines = sdpStr.split(/\r\n/);
         sdpStrRet = '';
@@ -422,11 +331,11 @@ function enhanceSDP(sdpStr, enhanceData) {
             continue;
 
         if (sdpLine.indexOf("m=audio") == 0 && audioIndex != -1) {
-            audioMLines = sdpLine.split(" ");
+            const audioMLines = sdpLine.split(" ");
             sdpStrRet += audioMLines[0] + " " + audioMLines[1] + " " + audioMLines[2] + " " + audioIndex;
         }
         else if (sdpLine.indexOf("m=video") == 0 && videoIndex != -1) {
-            audioMLines = sdpLine.split(" ");
+            const audioMLines = sdpLine.split(" ");
             sdpStrRet += audioMLines[0] + " " + audioMLines[1] + " " + audioMLines[2] + " " + videoIndex;
         }
         else {
@@ -510,7 +419,7 @@ function enhanceSDP(sdpStr, enhanceData) {
         }
         sdpStrRet += '\r\n';
     }
-    console.log("Resulting SDP: " + sdpStrRet);
+
     return sdpStrRet;
 }
 
@@ -585,81 +494,5 @@ function getrtpMapID(line) {
 }
 
 function errorHandler(error) {
-    console.log(error);
-}
-
-
-function loadCookies() {
-    var cookieWSURL = $.cookie("webrtcPublishWSURL");
-
-    if (cookieWSURL === undefined) {
-        cookieWSURL = wsURL;
-        $.cookie("webrtcPublishWSURL", cookieWSURL);
-    }
-    console.log('cookieWSURL: ' + cookieWSURL);
-
-    var cookieApplicationName = $.cookie("webrtcPublishApplicationName");
-    if (cookieApplicationName === undefined) {
-        cookieApplicationName = streamInfo.applicationName;
-        $.cookie("webrtcPublishApplicationName", cookieApplicationName);
-    }
-    console.log('cookieApplicationName: ' + cookieApplicationName);
-
-    var cookieStreamName = $.cookie("webrtcPublishStreamName");
-    if (cookieStreamName === undefined) {
-        cookieStreamName = streamInfo.streamName;
-        $.cookie("webrtcPublishStreamName", cookieStreamName);
-    }
-    console.log('cookieStreamName: ' + cookieStreamName);
-
-    var cookieVideoBitrate = $.cookie("webrtcPublishVideoBitrate");
-    if (cookieVideoBitrate === undefined) {
-        cookieVideoBitrate = videoBitrate;
-        $.cookie("webrtcPublishVideoBitrate", cookieVideoBitrate);
-    }
-    console.log('cookieVideoBitrate: ' + cookieVideoBitrate);
-
-    var cookieAudioBitrate = $.cookie("webrtcPublishAudioBitrate");
-    if (cookieAudioBitrate === undefined) {
-        cookieAudioBitrate = audioBitrate;
-        $.cookie("webrtcPublishAudioBitrate", cookieAudioBitrate);
-    }
-    console.log('cookieAudioBitrate: ' + cookieAudioBitrate);
-
-    var cookieVideoFrameRate = $.cookie("webrtcPublishVideoFrameRate");
-    if (cookieVideoFrameRate === undefined) {
-        cookieVideoFrameRate = videoFrameRate;
-        $.cookie("webrtcPublishVideoFrameRate", cookieVideoFrameRate);
-    }
-    console.log('cookieVideoFrameRate: ' + cookieVideoFrameRate);
-
-    var cookieVideoChoice = $.cookie("webrtcPublishVideoCodec");
-    if (cookieVideoChoice === undefined) {
-        cookieVideoChoice = videoChoice;
-        $.cookie("webrtcPublishVideoCodec", cookieVideoChoice);
-    }
-    console.log('cookieVideoChoice: ' + cookieVideoChoice);
-
-    var cookieAudioChoice = $.cookie("webrtcPublishAudioCodec");
-    if (cookieAudioChoice === undefined) {
-        cookieAudioChoice = audioChoice;
-        $.cookie("webrtcPublishAudioCodec", cookieAudioChoice);
-    }
-    console.log('cookieAudioChoice: ' + cookieAudioChoice);
-
-    $('#sdpURL').val(cookieWSURL);
-    $('#applicationName').val(cookieApplicationName);
-    $('#streamName').val(cookieStreamName);
-    $('#videoBitrate').val(cookieVideoBitrate);
-    $('#audioBitrate').val(cookieAudioBitrate);
-    $('#videoFrameRate').val(cookieVideoFrameRate);
-    $('#videoChoice').val(cookieVideoChoice);
-    $('#audioChoice').val(cookieAudioChoice);
-
-
-    userAgent = $('#userAgent').val().toLowerCase();
-
-    if (userAgent == null) {
-        userAgent = "unknown";
-    }
+    console.error(error);
 }

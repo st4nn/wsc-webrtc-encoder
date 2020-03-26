@@ -1,7 +1,33 @@
 function pageReady(WebRTCEncoder){
     const webrtcEncoder = new WebRTCEncoder({
         canvasPreview: document.getElementById("preview-canvas"),
-        canvasProgram: document.getElementById("program-canvas")
+        canvasProgram: document.getElementById("program-canvas"),
+        wsc_settings: {
+            url: document.getElementById("sdpURL").value,
+            applicationName: document.getElementById("applicationName").value,
+            streamName: document.getElementById("streamName").value,
+            videoBitrate: parseInt(document.getElementById("videoBitrate").value, 10), 
+            audioBitrate: parseInt(document.getElementById("audioBitrate").value, 10), 
+            videoFrameRate: document.getElementById("videoFrameRate").value, 
+            videoChoice: document.getElementById("videoChoice").value, 
+            audioChoice: document.getElementById("audioChoice").value 
+        }
+    });
+
+    document.getElementById("frmSettings").addEventListener("submit", (e)=>{
+        e.preventDefault();
+        const elements = e.target.elements;
+
+        webrtcEncoder.wsc.updateSettings({
+            url: elements[sdpURL].value,
+            applicationName: elements[applicationName].value,
+            streamName: elements[streamName].value,
+            videoBitrate: parseInt(elements[videoBitrate].value, 10),
+            audioBitrate: parseInt(elements[audioBitrate].value, 10),
+            videoFrameRate: elements[videoFrameRate].value,
+            videoChoice: elements[videoChoice].value,
+            audioChoice: elements[audioChoice].value
+        });
     });
 
     const 
@@ -9,8 +35,9 @@ function pageReady(WebRTCEncoder){
         localVideo = document.getElementById("localVideo"),
         localScreen = document.getElementById("localScreen");
 
+
     document.getElementById("btnShare-Camera").addEventListener("click", ()=>{
-        webrtcEncoder.request().camera(localVideo);
+        webrtcEncoder.request().camera(localVideo, 16/9);
     });
 
     document.getElementById("btnShare-Screen").addEventListener("click", () => {
@@ -34,10 +61,21 @@ function pageReady(WebRTCEncoder){
 
         webrtcEncoder.program.addText(previewResources.text);
         webrtcEncoder.program.addBackground(previewResources.background);
-        webrtcEncoder.program.start();
+        const stream = webrtcEncoder.program.start();
+        webrtcEncoder.wsc.setStream(stream);
     });
 
-    
+    document.getElementById("btnCast").addEventListener("click", ()=>{
+        const broadcastStatus = webrtcEncoder.wsc.getStatus();
+
+        if (broadcastStatus === "broadcasting"){
+            webrtcEncoder.wsc.stop();
+        } else{
+            webrtcEncoder.wsc.start();
+        }
+    });
+
+    addConecctionFunctions(webrtcEncoder);
 
     addLayoutFunctions(webrtcEncoder, localVideo, localScreen);
 

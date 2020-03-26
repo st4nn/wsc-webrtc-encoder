@@ -64,6 +64,11 @@ button i{
     color: var(--white);
 }
 
+.btn-danger{
+    background: var(--danger);
+    color: var(--white);
+}
+
 .btn-dark{
     background: var(--dark);
     color: var(--white);
@@ -314,4 +319,18 @@ select.form-control{
     height: 48px;
     max-height: 48px;
     width: 100%;
+}
+
+.error-container{
+    position: fixed;
+    width: 320px;
+    top: 3rem;
+    right: 2rem;
+}
+
+.error-container .error-alert{
+    background: var(--danger);
+    color: white;
+    position: relative;
+    padding: 8px;
 }
