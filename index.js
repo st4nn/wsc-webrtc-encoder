@@ -14,4 +14,4 @@ class WebRTCEncoder{
     }
 }
 
-export { WebRTCEncoder };
+export default WebRTCEncoder;
