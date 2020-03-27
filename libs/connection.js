@@ -226,7 +226,6 @@ function gotDescription(description) {
 
 
     description.sdp = enhanceSDP(description.sdp, enhanceData);
-    console.log(description);
 
     return peerConnection.setLocalDescription(description)
         .then(() => {

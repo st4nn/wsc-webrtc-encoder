@@ -19,14 +19,14 @@ function pageReady(WebRTCEncoder){
         const elements = e.target.elements;
 
         webrtcEncoder.wsc.updateSettings({
-            url: elements[sdpURL].value,
-            applicationName: elements[applicationName].value,
-            streamName: elements[streamName].value,
-            videoBitrate: parseInt(elements[videoBitrate].value, 10),
-            audioBitrate: parseInt(elements[audioBitrate].value, 10),
-            videoFrameRate: elements[videoFrameRate].value,
-            videoChoice: elements[videoChoice].value,
-            audioChoice: elements[audioChoice].value
+            url: document.getElementById("sdpURL").value,
+            applicationName: document.getElementById("applicationName").value,
+            streamName: document.getElementById("streamName").value,
+            videoBitrate: parseInt(document.getElementById("videoBitrate").value, 10),
+            audioBitrate: parseInt(document.getElementById("audioBitrate").value, 10),
+            videoFrameRate: document.getElementById("videoFrameRate").value,
+            videoChoice: document.getElementById("videoChoice").value,
+            audioChoice: document.getElementById("audioChoice").value 
         });
     });
 
