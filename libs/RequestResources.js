@@ -10,21 +10,32 @@ class requester{
             audio: false
         };
 
-        if (navigator.mediaDevices){
-            if(navigator.mediaDevices.getUserMedia) {
+        return new Promise((resolve, reject)=>{
+            if (navigator.mediaDevices.getUserMedia) {
                 navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
                     getUserMediaSuccess(stream, localVideo);
-                }).catch(errorHandler);
+                    resolve(stream);
+                }).catch((error)=>{
+                    errorHandler(error);
+                    reject(error);
+                });
             }
-        }
-        else if(navigator.getUserMedia) {
-            navigator.getUserMedia(constraints, (stream) => {
-                getUserMediaSuccess(stream, localVideo);
-            }, errorHandler);
-        }
-        else {
-            alert('Your browser does not support getUserMedia API');
-        }
+            else if (navigator.getUserMedia) {
+                navigator.getUserMedia(constraints, (stream) => {
+                    getUserMediaSuccess(stream, localVideo);
+                    resolve(stream);
+                }, (error)=>{
+                    errorHandler(error);
+                    reject(error);
+                });
+            }
+            else {
+                reject();
+                alert('Your browser does not support getUserMedia API');
+            }
+        });
+
+        
     }
     
     microphone(localAudio){
@@ -33,40 +44,65 @@ class requester{
             audio: true
         };
 
-        if (navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-                getUserMediaSuccess(stream, localAudio);
-            }).catch(errorHandler);
-        }
-        else if (navigator.getUserMedia) {
-            navigator.getUserMedia(constraints, (stream) => {
-                getUserMediaSuccess(stream, localAudio);
-            }, errorHandler);
-        }
-        else {
-            alert('Your browser does not support getUserMedia API');
-        }
+        return new Promise((resolve, reject) => {
+            if (navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+                    getUserMediaSuccess(stream, localAudio);
+                    resolve(stream);
+                }).catch((error)=>{
+                    errorHandler(error);
+                    reject(error);
+                });
+            }
+            else if (navigator.getUserMedia) {
+                navigator.getUserMedia(constraints, (stream) => {
+                    getUserMediaSuccess(stream, localAudio);
+                    resolve(stream);
+                }, (error) => {
+                    errorHandler(error);
+                    reject(error);
+                });
+            }
+            else {
+                reject();
+                alert('Your browser does not support getUserMedia API');
+            }
+        });
     }
     
     screen(localScreen){
         const constraints = {
-            video: true
+            video: true,
+            audio: true
         };
 
-        if (navigator.mediaDevices.getDisplayMedia) {
-            navigator.mediaDevices.getDisplayMedia(constraints).then((stream) => {
-                getUserMediaSuccess(stream, localScreen);
-            }).catch(errorHandler);
-            
-        } else if (navigator.getDisplayMedia) {
-            navigator.getDisplayMedia(constraints, (stream) => {
-                getUserMediaSuccess(stream, localScreen);
-            }, errorHandler);
-        } else {
-            navigator.mediaDevices.getUserMedia({ video: { mediaSource: 'screen' } }).then((stream) => {
-                getUserMediaSuccess(stream, localScreen);
-            }).catch(errorHandler);
-        }
+        return new Promise((resolve, reject) => {
+            if (navigator.mediaDevices.getDisplayMedia) {
+                navigator.mediaDevices.getDisplayMedia(constraints).then((stream) => {
+                    getUserMediaSuccess(stream, localScreen);
+                    resolve(stream);
+                }).catch((error) => {
+                    errorHandler(error);
+                    reject(error);
+                });
+                
+            } else if (navigator.getDisplayMedia) {
+                navigator.getDisplayMedia(constraints, (stream) => {
+                    getUserMediaSuccess(stream, localScreen);
+                }, (error) => {
+                    errorHandler(error);
+                    reject(error);
+                });
+            } else {
+                navigator.mediaDevices.getUserMedia({ video: { mediaSource: 'screen' }, audio: true }).then((stream) => {
+                    getUserMediaSuccess(stream, localScreen);
+                    resolve(stream);
+                }).catch((error) => {
+                    errorHandler(error);
+                    reject(error);
+                });
+            }
+        });
     }
 }
 

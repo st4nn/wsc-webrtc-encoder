@@ -58,3 +58,15 @@ function loadControllers(){
 function handleSettingsModal(){
     document.getElementById("settings-section").classList.toggle("show");
 }
+
+function addError(message){
+    const container = document.getElementById("error-container");
+    const errorAlert = document.createElement("div");
+    errorAlert.classList.add("error-alert");
+    errorAlert.classList.add("bounce-in-right");
+    errorAlert.innerHTML = "<p>" + message + "</p>";
+    container.append(errorAlert);
+    setTimeout(() => {
+        container.removeChild(errorAlert);
+    }, 3500);
+}

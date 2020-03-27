@@ -30,15 +30,7 @@ function addConecctionFunctions(webrtcEncoder){
                 break;
         }
 
-        const container = document.getElementById("error-container");
-        const errorAlert = document.createElement("div");
-        errorAlert.classList.add("error-alert"); 
-        errorAlert.classList.add("bounce-in-right");
-        errorAlert.innerHTML = "<p>" + message + "</p>";
-        container.append(errorAlert);
-        setTimeout(()=>{
-            container.removeChild(errorAlert);
-        }, 3500);
+        addError(message);
         
 
     });

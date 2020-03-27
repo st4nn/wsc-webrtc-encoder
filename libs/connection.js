@@ -47,6 +47,9 @@ class WSConnection{
     }
     setStream(stream){
         localStream = stream;
+        if (peerConnection !== null){
+            peerConnection.addStream(localStream);
+        }
     }
 
     start(){
@@ -131,6 +134,10 @@ function wsConnect(url){
         peerConnection.onicecandidate = gotIceCandidate;
 
         peerConnection.addStream(localStream);
+        /*var localTracks = localStream.getTracks();
+        for (var localTrack of localTracks) {
+            peerConnection.addTrack(localTrack, localStream);
+        }*/
 
         peerConnection.createOffer().then(gotDescription).catch(errorHandler);
     }
@@ -219,6 +226,7 @@ function gotDescription(description) {
 
 
     description.sdp = enhanceSDP(description.sdp, enhanceData);
+    console.log(description);
 
     return peerConnection.setLocalDescription(description)
         .then(() => {
@@ -303,6 +311,7 @@ function enhanceSDP(sdpStr, enhanceData) {
     let sdpSection = 'header';
     let hitMID = false;
     let sdpStrRet = '';
+    let sawVideo = false;
 
     // Firefox provides a reasonable SDP, Chrome is just odd
     // so we have to doing a little mundging to make it all work
@@ -332,6 +341,7 @@ function enhanceSDP(sdpStr, enhanceData) {
 
         if (sdpLine.indexOf("m=audio") == 0 && audioIndex != -1) {
             const audioMLines = sdpLine.split(" ");
+            console.log(audioMLines);
             sdpStrRet += audioMLines[0] + " " + audioMLines[1] + " " + audioMLines[2] + " " + audioIndex;
         }
         else if (sdpLine.indexOf("m=video") == 0 && videoIndex != -1) {
@@ -347,20 +357,22 @@ function enhanceSDP(sdpStr, enhanceData) {
         }
 
         if (sdpLine.indexOf("a=rtcp-mux") === 0) {
-            [
-                "a=rtcp-rsize",
-                "a=rtpmap:108 H264/90000",
-                "a=fmtp:108 x-google-min-bitrate=360;x-google-max-bitrate=360",
-                "a=rtcp-fb:108 goog-remb",
-                "a=rtcp-fb:108 transport-cc",
-                "a=rtcp-fb:108 ccm fir",
-                "a=rtcp-fb:108 nack",
-                "a=rtcp-fb:108 nack pli",
-                "a=fmtp:108 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f",
-            ].forEach((row) => {
-                sdpStrRet += '\r\n';
-                sdpStrRet += row;
-            });
+            if (sdpSection == "video"){
+                [
+                    "a=rtcp-rsize",
+                    "a=rtpmap:108 H264/90000",
+                    "a=fmtp:108 x-google-min-bitrate=360;x-google-max-bitrate=360",
+                    "a=rtcp-fb:108 goog-remb",
+                    "a=rtcp-fb:108 transport-cc",
+                    "a=rtcp-fb:108 ccm fir",
+                    "a=rtcp-fb:108 nack",
+                    "a=rtcp-fb:108 nack pli",
+                    "a=fmtp:108 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f",
+                ].forEach((row) => {
+                    sdpStrRet += '\r\n';
+                    sdpStrRet += row;
+                });
+            }
         }
 
         if (sdpLine.indexOf("m=audio") === 0) {
@@ -368,6 +380,7 @@ function enhanceSDP(sdpStr, enhanceData) {
             hitMID = false;
         }
         else if (sdpLine.indexOf("m=video") === 0) {
+            sawVideo
             sdpSection = 'video';
             hitMID = false;
         }

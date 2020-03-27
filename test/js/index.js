@@ -34,18 +34,42 @@ function pageReady(WebRTCEncoder){
         localAudio = document.getElementById("localAudio"), 
         localVideo = document.getElementById("localVideo"),
         localScreen = document.getElementById("localScreen");
+        
+    let 
+        cameraStream = null,
+        screenStream = null,
+        microphoneStream = null;
+
 
 
     document.getElementById("btnShare-Camera").addEventListener("click", ()=>{
-        webrtcEncoder.request().camera(localVideo, 16/9);
+        webrtcEncoder.request().camera(localVideo, 16/9)
+        .then((stream)=>{
+            cameraStream = stream;
+        })
+        .catch(()=>{
+            addError("Camera isn't available");
+        });
     });
 
     document.getElementById("btnShare-Screen").addEventListener("click", () => {
-        webrtcEncoder.request().screen(localScreen);
+        webrtcEncoder.request().screen(localScreen)
+        .then((stream) => {
+            screenStream = stream;
+        })
+        .catch(() => {
+            addError("Screen sharing isn't available");
+        });
     });
 
     document.getElementById("btnShare-Microphone").addEventListener("click", () => {
-        webrtcEncoder.request().microphone(localAudio);
+        webrtcEncoder.request().microphone(localAudio)
+        .then((stream) => {
+            microphoneStream = stream;
+        })
+        .catch(() => {
+            addError("Microphone isn't available");
+        });
     });
 
     document.getElementById("btnPublishPreview").addEventListener("click", () => {
@@ -62,6 +86,14 @@ function pageReady(WebRTCEncoder){
         webrtcEncoder.program.addText(previewResources.text);
         webrtcEncoder.program.addBackground(previewResources.background);
         const stream = webrtcEncoder.program.start();
+        
+        //[screenStream, microphoneStream].forEach((objectStream)=>{
+        [microphoneStream].forEach((objectStream) => {
+            if (objectStream !== null){
+                objectStream.getAudioTracks().forEach(track => stream.addTrack(track));
+            }
+        });
+
         webrtcEncoder.wsc.setStream(stream);
     });
 

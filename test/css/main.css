@@ -331,6 +331,7 @@ select.form-control{
 .error-container .error-alert{
     background: var(--danger);
     color: white;
-    position: relative;
+    margin-bottom: 1rem;
     padding: 8px;
+    position: relative;
 }
