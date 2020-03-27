@@ -1,6 +1,6 @@
-import RequesResources from "./libs/RequestResources.js";
-import Previewer from "./libs/Preview.js";
-import Connection from "./libs/Connection.js";
+import RequesResources from "./libs/requestResources.js";
+import Previewer from "./libs/preview.js";
+import Connection from "./libs/connection.js";
 
 class WebRTCEncoder{
     constructor({ canvasPreview, canvasProgram, wsc_settings = {} }){

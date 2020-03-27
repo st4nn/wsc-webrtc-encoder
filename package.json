@@ -1,6 +1,6 @@
 {
   "name": "wsc-webrtc-encoder",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Front-end component for broadcasting to Wowza Cloud Streaming Server",
   "main": "index.js",
   "scripts": {
@@ -23,7 +23,4 @@
     "url": "https://github.com/st4nn/wsc-webrtc-encoder/issues"
   },
   "homepage": "https://github.com/st4nn/wsc-webrtc-encoder#readme",
-  "dependencies": {
-    "media-stream-merger": "^1.0.0"
-  }
 }
