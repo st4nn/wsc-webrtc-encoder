@@ -88,7 +88,7 @@ function pageReady(WebRTCEncoder){
         const stream = webrtcEncoder.program.start();
         
         //[screenStream, microphoneStream].forEach((objectStream)=>{
-        [microphoneStream].forEach((objectStream) => {
+        [screenStream, microphoneStream].forEach((objectStream) => {
             if (objectStream !== null){
                 objectStream.getAudioTracks().forEach(track => stream.addTrack(track));
             }
