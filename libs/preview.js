@@ -94,11 +94,6 @@ class PreviewOnCanvas {
                 }
             });
 
-            ctx.font = `${60}px Arial`;
-            ctx.fillStyle = "white";
-            const d = new Date();
-            ctx.fillText(d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds(), (canvas.width * 0.034375), (canvas.height * 0.11));
-
             if (self.text) {
                 const { value = "", background = false, size = 50, color = "black", subtitle = "" } = self.text;
                 if (background) {

@@ -1,6 +1,6 @@
 {
   "name": "wsc-webrtc-encoder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Front-end component for broadcasting to Wowza Cloud Streaming Server",
   "main": "index.js",
   "scripts": {
