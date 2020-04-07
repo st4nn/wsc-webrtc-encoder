@@ -8,6 +8,7 @@ function loadControllers(){
         handleSettingsModal();
     });
 
+    
     document.getElementById("btnShare-Camera").addEventListener("click", () => {
         document.getElementById("localVideo").classList.toggle("show");
     });

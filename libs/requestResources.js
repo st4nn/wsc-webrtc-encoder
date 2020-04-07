@@ -73,7 +73,7 @@ class requester{
     screen(localScreen){
         const constraints = {
             video: true,
-            audio: true
+            audio: false
         };
 
         return new Promise((resolve, reject) => {

@@ -15,6 +15,10 @@ function addLetterheadFunctions(webrtcEncoder) {
         currentLetterhead.value = e.target.value;
     });
 
+    document.getElementById("txtLetterhead_Subtitle").addEventListener("change", (e) => {
+        currentLetterhead.subtitle = e.target.value;
+    });
+
     document.getElementById("txtLetterhead_Size").addEventListener("change", (e) => {
         try{
             currentLetterhead.size = parseInt(e.target.value);

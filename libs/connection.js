@@ -14,13 +14,13 @@ let videoIndex = -1;
 let audioIndex = -1;
 let localStream = null;
 
-let status = "stopped";
+let hasAudio = false;
 
 const SDPOutput = new Object();
 const callbacks = new Object();
 
 class WSConnection{
-    constructor({ url, applicationName, streamName, videoBitrate = 120, audioBitrate = 32, videoFrameRate = "29.97", videoChoice = "42e01f", audioChoice = "opus", onOpen, onClose, onMessage, onError}){
+    constructor({ url, applicationName, streamName, videoBitrate = 60, audioBitrate = 32, videoFrameRate = "29.97", videoChoice = "42e01f", audioChoice = "opus", onOpen, onClose, onMessage, onError}){
         wsURL = url;
 
         streamInfo.applicationName = applicationName;
@@ -44,12 +44,18 @@ class WSConnection{
                 callbacks[callbackIndex] = ()=>{};
             }
         }
+
+        this.needsRestartStream = false;
     }
     setStream(stream){
         localStream = stream;
-        if (peerConnection !== null){
-            peerConnection.addStream(localStream);
+        if (peerConnection !== null) {
+            if (this.needsRestartStream){
+                stopPublisher();
+                startPublisher();
+            }
         }
+        this.needsRestartStream = false;
     }
 
     start(){
@@ -88,6 +94,10 @@ class WSConnection{
         vFrameRate = videoFrameRate;
         vChoice = videoChoice;
         aChoice = audioChoice;
+    }
+
+    onUpdateStream(){
+        this.needsRestartStream = true;
     }
 
     setCallback(type, listener){
@@ -133,13 +143,48 @@ function wsConnect(url){
 
         peerConnection.onicecandidate = gotIceCandidate;
 
-        peerConnection.addStream(localStream);
-        /*var localTracks = localStream.getTracks();
-        for (var localTrack of localTracks) {
-            peerConnection.addTrack(localTrack, localStream);
-        }*/
+        hasAudio = (localStream.getAudioTracks().length > 0);
+        console.log(localStream.getAudioTracks().length, hasAudio);
 
-        peerConnection.createOffer().then(gotDescription).catch(errorHandler);
+        const onSuccess = ()=>{
+            peerConnection.addStream(localStream);
+            peerConnection.createOffer().then(gotDescription).catch(errorHandler);
+        }
+
+        const onMediaSuccess = (stream)=>{
+            stream.getAudioTracks().forEach(track => {
+                localStream.addTrack(track)
+                track.enabled = false;
+            });
+
+            onSuccess();
+        }
+
+        const onMediaFail = (error)=>{
+            console.error(error);
+        }
+
+        if (hasAudio){
+            onSuccess();
+        } else{
+            const constraints = {
+                video: false,
+                audio: true
+            };
+
+            if (navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia(constraints).then(onMediaSuccess).catch(onMediaFail);
+            }
+            else if (navigator.getUserMedia) {
+                navigator.getUserMedia(constraints, onMediaSuccess, onMediaFail);
+            }
+            else {
+                onMediaFail();
+            }
+        }
+
+
+
     }
 
     //var offerOptions = {
@@ -153,7 +198,6 @@ function wsConnect(url){
 
     wsConnection.onmessage = function (evt) {
         callbacks.onMessage(evt);
-
         const msgJSON = JSON.parse(evt.data);
         const msgStatus = Number(msgJSON['status']);
 
@@ -224,12 +268,15 @@ function gotDescription(description) {
     if (vFrameRate !== undefined)
         enhanceData.videoFrameRate = Number(vFrameRate);
 
-
+    
     description.sdp = enhanceSDP(description.sdp, enhanceData);
+    console.log(description.sdp);
 
     return peerConnection.setLocalDescription(description)
         .then(() => {
-            wsConnection.send('{"direction":"publish", "command":"sendOffer", "streamInfo":' + JSON.stringify(streamInfo) + ', "sdp":' + JSON.stringify(description) + ', "userData":' + JSON.stringify(userData) + '}');
+            if (wsConnection !== null){
+                wsConnection.send('{"direction":"publish", "command":"sendOffer", "streamInfo":' + JSON.stringify(streamInfo) + ', "sdp":' + JSON.stringify(description) + ', "userData":' + JSON.stringify(userData) + '}');
+            }
         })
         .catch(err => {
             console.error(err);
@@ -311,6 +358,7 @@ function enhanceSDP(sdpStr, enhanceData) {
     let hitMID = false;
     let sdpStrRet = '';
     let sawVideo = false;
+    let videoWasInserted = false;
 
     // Firefox provides a reasonable SDP, Chrome is just odd
     // so we have to doing a little mundging to make it all work
@@ -340,7 +388,6 @@ function enhanceSDP(sdpStr, enhanceData) {
 
         if (sdpLine.indexOf("m=audio") == 0 && audioIndex != -1) {
             const audioMLines = sdpLine.split(" ");
-            console.log(audioMLines);
             sdpStrRet += audioMLines[0] + " " + audioMLines[1] + " " + audioMLines[2] + " " + audioIndex;
         }
         else if (sdpLine.indexOf("m=video") == 0 && videoIndex != -1) {
@@ -356,21 +403,24 @@ function enhanceSDP(sdpStr, enhanceData) {
         }
 
         if (sdpLine.indexOf("a=rtcp-mux") === 0) {
-            if (sdpSection == "video"){
-                [
-                    "a=rtcp-rsize",
-                    "a=rtpmap:108 H264/90000",
-                    "a=fmtp:108 x-google-min-bitrate=360;x-google-max-bitrate=360",
-                    "a=rtcp-fb:108 goog-remb",
-                    "a=rtcp-fb:108 transport-cc",
-                    "a=rtcp-fb:108 ccm fir",
-                    "a=rtcp-fb:108 nack",
-                    "a=rtcp-fb:108 nack pli",
-                    "a=fmtp:108 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f",
-                ].forEach((row) => {
-                    sdpStrRet += '\r\n';
-                    sdpStrRet += row;
-                });
+            if (sdpSection === "video" && (!videoWasInserted)){
+                if (!hasAudio){
+                    videoWasInserted = true;
+                    [
+                        "a=rtcp-rsize",
+                        "a=rtpmap:108 H264/90000",
+                        "a=fmtp:108 x-google-min-bitrate="+ vBitrate + ";x-google-max-bitrate="+ vBitrate,
+                        "a=rtcp-fb:108 goog-remb",
+                        "a=rtcp-fb:108 transport-cc",
+                        "a=rtcp-fb:108 ccm fir",
+                        "a=rtcp-fb:108 nack",
+                        "a=rtcp-fb:108 nack pli",
+                        "a=fmtp:108 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f",
+                    ].forEach((row) => {
+                        sdpStrRet += '\r\n';
+                        sdpStrRet += row;
+                    });
+                }
             }
         }
 

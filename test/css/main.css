@@ -252,7 +252,8 @@ select.form-control{
 
 .backgrounds,
 .layouts,
-.letterheads{
+.letterheads,
+.video-settings{
     background: rgba(0, 0, 0, 0.84);
     border-radius: 4px;
     color: white;
@@ -334,4 +335,27 @@ select.form-control{
     margin-bottom: 1rem;
     padding: 8px;
     position: relative;
+}
+
+.video-settings > div > div{
+    align-items: center;
+    display: flex;
+    justify-content: space-around;
+}
+
+.video-settings > div > div > span{
+    flex: 1;    
+}
+.video-settings > div > div > span:first-child{
+    text-align: right;
+}
+.video-settings > div > div > div{
+    flex: 2;
+    margin: 0 1rem;
+    text-align: center;
+}
+
+.video-settings > div > div > div > input{
+    display: block;
+    width: 100%;
 }

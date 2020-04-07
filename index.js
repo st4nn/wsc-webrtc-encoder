@@ -1,4 +1,4 @@
-import RequesResources from "./libs/requestResources.js";
+import RequestResources from "./libs/requestResources.js";
 import Previewer from "./libs/preview.js";
 import Connection from "./libs/connection.js";
 
@@ -10,7 +10,7 @@ class WebRTCEncoder{
     }
 
     request(){
-        return new RequesResources();
+        return new RequestResources();
     }
 }
 

@@ -85,6 +85,30 @@
             <button id="btnPublishPreview" class="btn btn-dark"><i class="fas fa-arrow-right"></i></button>
             <canvas id="program-canvas"></canvas>
         </div>
+        <div class="video-settings">
+            <div>
+                <label>Video frecuency</label>
+                <div>
+                    <span>27</span>
+                    <div>
+                        <span id="lblVideoFrecuency">140</span>
+                        <input id="txtVideoFrecuency" type="range" min="30" max="400" step="10" value="140"/>
+                    </div>
+                    <span>400</span>
+                </div>
+            </div>
+            <div>
+                <label>Video quality</label>
+                <div>
+                    <span>32</span>
+                    <div>
+                        <span id="lblVideoQuality">60</span>
+                        <input id="txtVideoQuality" type="range" min="32" max="736" step="32" value="60"/>
+                    </div>
+                    <span>720</span>
+                </div>
+            </div>
+        </div>
 
         <div class="sources-container">
             <div>
@@ -139,6 +163,10 @@
                 <div class="form-group">
                     <label class="form-label">Text:</label>
                     <input id="txtLetterhead_Value" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Subtitle:</label>
+                    <input id="txtLetterhead_Subtitle" class="form-control" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">Text size:</label>
@@ -208,10 +236,10 @@
                 //sdpURL: "wss://408d97.entrypoint.cloud.wowza.com/webrtc-session.json",
                 //applicationName: "app-e01c",
                 //streamName: "SUFwSEN1",
-                sdpURL: "wss://41b7f5.entrypoint.cloud.wowza.com/webrtc-session.json",
-                applicationName: "app-3d09",
-                streamName: "aee6baf9",
-                videoBitrate: "120",
+                sdpURL: "wss://5ab772334c39c.streamlock.net/webrtc-session.json",
+                applicationName: "webrtc_6UfJTdhkcR7ntqfkMPon",
+                streamName: "webrtc",
+                videoBitrate: "60",
                 audioBitrate: "32",
                 videoFrameRate: "29.97"
             };

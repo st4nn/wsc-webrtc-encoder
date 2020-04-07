@@ -87,13 +87,9 @@ function handleLayout(webrtcEncoder, firstElement, secondElement, layoutIndex){
     webrtcEncoder.previewer.removeAllResources();
     if (typeof secondElement === "number"){
         layoutFunction = getLayoutFunctions(secondElement);
-        webrtcEncoder.previewer.addResource({ src: firstElement, ...layoutFunction });
+        webrtcEncoder.previewer.addResources([{ src: firstElement, ...layoutFunction }]);
     } else{
         layoutFunction = getLayoutFunctions(layoutIndex);
-        webrtcEncoder.previewer.addResource({ src: firstElement, ...layoutFunction[0] });
-        webrtcEncoder.previewer.addResource({ src: secondElement, ...layoutFunction[1] });
-    }
-    if (!webrtcEncoder.previewer.status()) {
-        webrtcEncoder.previewer.start();
+        webrtcEncoder.previewer.addResources([{ src: firstElement, ...layoutFunction[0] }, { src: secondElement, ...layoutFunction[1] }]);
     }
 }

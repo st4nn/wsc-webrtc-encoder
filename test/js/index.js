@@ -16,8 +16,6 @@ function pageReady(WebRTCEncoder){
 
     document.getElementById("frmSettings").addEventListener("submit", (e)=>{
         e.preventDefault();
-        const elements = e.target.elements;
-
         webrtcEncoder.wsc.updateSettings({
             url: document.getElementById("sdpURL").value,
             applicationName: document.getElementById("applicationName").value,
@@ -42,34 +40,64 @@ function pageReady(WebRTCEncoder){
 
 
 
-    document.getElementById("btnShare-Camera").addEventListener("click", ()=>{
-        webrtcEncoder.request().camera(localVideo, 16/9)
-        .then((stream)=>{
-            cameraStream = stream;
-        })
-        .catch(()=>{
-            addError("Camera isn't available");
-        });
+    document.getElementById("btnShare-Camera").addEventListener("click", (e)=>{
+        if (cameraStream === null){
+            webrtcEncoder.request().camera(localVideo, 16/9)
+            .then((stream)=>{
+                cameraStream = stream;
+
+                e.target.innerHTML = "Stop sharing camera";
+            })
+            .catch(()=>{
+                addError("Camera isn't available");
+            });
+        } else{
+            e.target.innerHTML = "Share camera";
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
     });
 
-    document.getElementById("btnShare-Screen").addEventListener("click", () => {
-        webrtcEncoder.request().screen(localScreen)
-        .then((stream) => {
-            screenStream = stream;
-        })
-        .catch(() => {
-            addError("Screen sharing isn't available");
-        });
+    document.getElementById("btnShare-Screen").addEventListener("click", (e) => {
+        if (screenStream === null){
+            webrtcEncoder.request().screen(localScreen)
+            .then((stream) => {
+                screenStream = stream;
+
+                e.target.innerHTML = "Stop sharing screen";
+            })
+            .catch(() => {
+                addError("Screen sharing isn't available");
+            });
+        } else{
+            e.target.innerHTML = "Share screen";
+            screenStream.getTracks().forEach(track => track.stop());
+            screenStream = null;
+        }
     });
 
-    document.getElementById("btnShare-Microphone").addEventListener("click", () => {
-        webrtcEncoder.request().microphone(localAudio)
-        .then((stream) => {
-            microphoneStream = stream;
-        })
-        .catch(() => {
-            addError("Microphone isn't available");
-        });
+    
+
+    document.getElementById("btnShare-Microphone").addEventListener("click", (e) => {
+        if (microphoneStream === null) {
+            webrtcEncoder.request().microphone(localAudio)
+                .then((stream) => {
+                    microphoneStream = stream;
+
+                    webrtcEncoder.wsc.onUpdateStream();
+                    e.target.innerHTML = "Stop sharing microphone";
+                })
+                .catch((err) => {
+                    console.error(err);
+                    addError("Microphone isn't available");
+                });
+        } else{
+            e.target.innerHTML = "Share microphone";
+            //microphoneStream.getTracks().forEach(track => track.stop());
+            webrtcEncoder.wsc.onUpdateStream();
+            microphoneStream = null;
+        }
+        
     });
 
     document.getElementById("btnPublishPreview").addEventListener("click", () => {
@@ -79,16 +107,14 @@ function pageReady(WebRTCEncoder){
         webrtcEncoder.program.removeText();
         webrtcEncoder.program.removeBackground();
         
-        previewResources.resources.forEach((resource)=>{
-            webrtcEncoder.program.addResource(resource);
-        });
+        webrtcEncoder.program.addResources(previewResources.resources);
 
         webrtcEncoder.program.addText(previewResources.text);
         webrtcEncoder.program.addBackground(previewResources.background);
         const stream = webrtcEncoder.program.start();
         
         //[screenStream, microphoneStream].forEach((objectStream)=>{
-        [screenStream, microphoneStream].forEach((objectStream) => {
+        [microphoneStream].forEach((objectStream) => {
             if (objectStream !== null){
                 objectStream.getAudioTracks().forEach(track => stream.addTrack(track));
             }
@@ -105,6 +131,17 @@ function pageReady(WebRTCEncoder){
         } else{
             webrtcEncoder.wsc.start();
         }
+    });
+
+    document.getElementById("txtVideoFrecuency").addEventListener("change", (e) => {
+        webrtcEncoder.previewer.setFrecuency(e.target.value);
+        webrtcEncoder.program.setFrecuency(e.target.value);
+        document.getElementById("lblVideoFrecuency").innerHTML = e.target.value;
+    });
+
+    document.getElementById("txtVideoQuality").addEventListener("change", (e) => {
+        
+        document.getElementById("lblVideoQuality").innerHTML = e.target.value;
     });
 
     addConecctionFunctions(webrtcEncoder);
