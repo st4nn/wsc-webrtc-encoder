@@ -44,18 +44,54 @@ class WSConnection{
                 callbacks[callbackIndex] = ()=>{};
             }
         }
-
-        this.needsRestartStream = false;
     }
     setStream(stream){
         localStream = stream;
+
         if (peerConnection !== null) {
-            if (this.needsRestartStream){
-                stopPublisher();
-                startPublisher();
-            }
+            //stopPublisher();
+            //startPublisher();
         }
-        this.needsRestartStream = false;
+
+        return new Promise((resolve)=>{
+            hasAudio = (localStream.getAudioTracks().length > 0);
+
+            const onSuccess = ()=>{
+                resolve(localStream);
+            }
+
+            const onMediaSuccess = (stream) => {
+                stream.getAudioTracks().forEach(track => {
+                    localStream.addTrack(track)
+                    track.enabled = false;
+                });
+
+                onSuccess();
+            }
+
+            const onMediaFail = (error) => {
+                reject(error);
+            }
+
+            if (hasAudio) {
+                onSuccess();
+            } else {
+                const constraints = {
+                    video: false,
+                    audio: true
+                };
+
+                if (navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia(constraints).then(onMediaSuccess).catch(onMediaFail);
+                }
+                else if (navigator.getUserMedia) {
+                    navigator.getUserMedia(constraints, onMediaSuccess, onMediaFail);
+                }
+                else {
+                    onMediaFail();
+                }
+            }
+        });
     }
 
     start(){
@@ -96,10 +132,6 @@ class WSConnection{
         aChoice = audioChoice;
     }
 
-    onUpdateStream(){
-        this.needsRestartStream = true;
-    }
-
     setCallback(type, listener){
         if (typeof type === "string"){
             if (callbacks[type] == undefined){
@@ -125,7 +157,7 @@ function wsConnect(url){
     wsConnection.binaryType = 'arraybuffer';
 
     wsConnection.onopen = function () {
-        callbacks.onOpen();
+        
         peerConnection = new RTCPeerConnection(peerConnectionConfig);
         
         peerConnection.onconnectionstatechange = (evt)=>{
@@ -143,48 +175,10 @@ function wsConnect(url){
 
         peerConnection.onicecandidate = gotIceCandidate;
 
-        hasAudio = (localStream.getAudioTracks().length > 0);
-        console.log(localStream.getAudioTracks().length, hasAudio);
-
-        const onSuccess = ()=>{
-            peerConnection.addStream(localStream);
-            peerConnection.createOffer().then(gotDescription).catch(errorHandler);
-        }
-
-        const onMediaSuccess = (stream)=>{
-            stream.getAudioTracks().forEach(track => {
-                localStream.addTrack(track)
-                track.enabled = false;
-            });
-
-            onSuccess();
-        }
-
-        const onMediaFail = (error)=>{
-            console.error(error);
-        }
-
-        if (hasAudio){
-            onSuccess();
-        } else{
-            const constraints = {
-                video: false,
-                audio: true
-            };
-
-            if (navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia(constraints).then(onMediaSuccess).catch(onMediaFail);
-            }
-            else if (navigator.getUserMedia) {
-                navigator.getUserMedia(constraints, onMediaSuccess, onMediaFail);
-            }
-            else {
-                onMediaFail();
-            }
-        }
-
-
-
+        peerConnection.addStream(localStream);
+        peerConnection.createOffer().then(gotDescription).catch(errorHandler);
+        
+        callbacks.onOpen();
     }
 
     //var offerOptions = {
@@ -270,7 +264,6 @@ function gotDescription(description) {
 
     
     description.sdp = enhanceSDP(description.sdp, enhanceData);
-    console.log(description.sdp);
 
     return peerConnection.setLocalDescription(description)
         .then(() => {
